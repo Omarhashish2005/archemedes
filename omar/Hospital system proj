@@ -1,0 +1,255 @@
+#include <iostream>
+#include <fstream>
+using namespace std;
+
+const int MAX = 100;
+
+struct Patient {
+    int id;
+    string name;
+    int age;
+    string doctor;
+    string status;      // admitted / not_admitted
+    string notes;
+    string appointment;
+};
+
+Patient patients[MAX];
+int countPatients = 0;
+
+// ---------------- Load patients from file ----------------
+void loadFromFile() {
+    ifstream file("patients.txt");
+    if (!file) {
+        cout << "No initial file found.\n";
+        return;
+    }
+
+    countPatients = 0;
+    while (file >> patients[countPatients].id
+                >> patients[countPatients].name
+                >> patients[countPatients].age
+                >> patients[countPatients].doctor
+                >> patients[countPatients].status
+                >> patients[countPatients].notes
+                >> patients[countPatients].appointment) {
+        countPatients++;
+    }
+    file.close();
+    cout << "Patients loaded successfully.\n";
+}
+
+// ---------------- Save patients to file ----------------
+void saveToFile() {
+    ofstream file("patients.txt");
+    if (!file) {
+        cout << "Error opening file for saving.\n";
+        return;
+    }
+
+    for (int i = 0; i < countPatients; i++) {
+        file << patients[i].id << " "
+             << patients[i].name << " "
+             << patients[i].age << " "
+             << patients[i].doctor << " "
+             << patients[i].status << " "
+             << patients[i].notes << " "
+             << patients[i].appointment << endl;
+    }
+    file.close();
+    cout << "Data saved successfully.\n";
+}
+
+// ---------------- Search by ID ----------------
+int searchByID(int id) {
+    for (int i = 0; i < countPatients; i++) {
+        if (patients[i].id == id)
+            return i;
+    }
+    return -1;
+}
+
+// ---------------- Add Patient ----------------
+void addPatient() {
+    int id, age;
+    string name, doctor, status, notes, appointment;
+
+    do {
+        cout << "Enter unique Patient ID: ";
+        cin >> id;
+        if (searchByID(id) != -1)
+            cout << "ID already exists! Try again.\n";
+    } while (searchByID(id) != -1);
+
+    cout << "Enter Name: ";
+    cin >> name;
+
+    cout << "Enter Age: ";
+    cin >> age;
+
+    cout << "Enter Doctor: ";
+    cin >> doctor;
+
+    // -------- STATUS VALIDATION 
+    do {
+        cout << "Enter Status (admitted/not_admitted): ";
+        cin >> status;
+        if (status != "admitted" && status != "not_admitted")
+            cout << "Invalid status! Try again.\n";
+    } while (status != "admitted" && status != "not_admitted");
+
+    cin.ignore(1000, '\n');   
+
+    cout << "Enter Medical Notes: ";
+    cin >> notes;
+
+    cout << "Enter Appointment Date: ";
+    cin >> appointment;
+
+    patients[countPatients].id = id;
+    patients[countPatients].name = name;
+    patients[countPatients].age = age;
+    patients[countPatients].doctor = doctor;
+    patients[countPatients].status = status;
+    patients[countPatients].notes = notes;
+    patients[countPatients].appointment = appointment;
+
+    countPatients++;
+    saveToFile();
+    cout << "Patient added successfully.\n";
+}
+
+// ---------------- Update Patient ----------------
+void updatePatient() {
+    int id;
+    cout << "Enter Patient ID to update: ";
+    cin >> id;
+
+    int index = searchByID(id);
+    if (index == -1) {
+        cout << "Patient not found.\n";
+        return;
+    }
+
+    cout << "Enter new Doctor: ";
+    cin >> patients[index].doctor;
+
+    string status;
+    do {
+        cout << "Enter new Status (admitted/not_admitted): ";
+        cin >> status;
+        if (status != "admitted" && status != "not_admitted")
+            cout << "Invalid status! Try again.\n";
+    } while (status != "admitted" && status != "not_admitted");
+
+    cin.ignore(1000, '\n');   
+    
+    patients[index].status = status;
+
+    cout << "Enter new Notes: ";
+    cin >> patients[index].notes;
+
+    cout << "Enter new Appointment Date: ";
+    cin >> patients[index].appointment;
+
+    saveToFile();
+    cout << "Patient updated.\n";
+}
+
+// ---------------- Delete Patient ----------------
+void deletePatient() {
+    int id;
+    cout << "Enter Patient ID to delete: ";
+    cin >> id;
+
+    int index = searchByID(id);
+    if (index == -1) {
+        cout << "Patient not found.\n";
+        return;
+    }
+
+    for (int i = index; i < countPatients - 1; i++) {
+        patients[i] = patients[i + 1];
+    }
+    countPatients--;
+
+    saveToFile();
+    cout << "Patient deleted.\n";
+}
+
+// ---------------- Display All Patients ----------------
+void displayAll() {
+    for (int i = 0; i < countPatients; i++) {
+        cout << patients[i].id << " "
+             << patients[i].name << " "
+             << patients[i].doctor << " "
+             << patients[i].appointment << " "
+             << patients[i].status << endl;
+    }
+}
+
+// ---------------- Sort By ID ----------------
+void sortByID() {
+    for (int i = 0; i < countPatients - 1; i++) {
+        for (int j = i + 1; j < countPatients; j++) {
+            if (patients[i].id > patients[j].id)
+                swap(patients[i], patients[j]);
+        }
+    }
+    cout << "Sorted by ID.\n";
+}
+
+// ---------------- Sort By Doctor ----------------
+void sortByDoctor() {
+    for (int i = 0; i < countPatients - 1; i++) {
+        for (int j = i + 1; j < countPatients; j++) {
+            if (patients[i].doctor > patients[j].doctor)
+                swap(patients[i], patients[j]);
+        }
+    }
+    cout << "Sorted by Doctor.\n";
+}
+
+// ---------------- Report Admitted Patients ----------------
+void report() {
+    cout << "\nAdmitted Patients:\n";
+    for (int i = 0; i < countPatients; i++) {
+        if (patients[i].status == "admitted") {
+            cout << patients[i].name << " (" << patients[i].doctor << ")\n";
+        }
+    }
+}
+
+// ---------------- Main Menu ----------------
+int main() {
+    int choice;
+    loadFromFile();
+
+    do {
+        cout << "\n--- Hospital Management System ---\n";
+        cout << "1. Add Patient\n";
+        cout << "2. Update Patient\n";
+        cout << "3. Delete Patient\n";
+        cout << "4. Display All Patients\n";
+        cout << "5. Sort by ID\n";
+        cout << "6. Sort by Doctor\n";
+        cout << "7. Report\n";
+        cout << "8. Exit\n";
+        cout << "Choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1: addPatient(); break;
+            case 2: updatePatient(); break;
+            case 3: deletePatient(); break;
+            case 4: displayAll(); break;
+            case 5: sortByID(); break;
+            case 6: sortByDoctor(); break;
+            case 7: report(); break;
+            case 8: cout << "Exiting...\n"; break;
+            default: cout << "Invalid choice.\n";
+        }
+    } while (choice != 8);
+
+    return 0;
+}
